@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>CRUD de Restaurantes</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    input, button, select { margin: 0.2em; }
+    pre { background: #f4f4f4; padding: 1em; }
+    .restaurante { border: 1px solid #ccc; margin: 0.5em 0; padding: 0.5em; }
+  </style>
+</head>
+<body>
+  <h1>CRUD de Restaurantes</h1>
+  <h2>Cadastrar Restaurante</h2>
+  <form onsubmit="cadastrarRestaurante(event)">
+    Nome: <input type="text" id="nome" required><br>
+    Taxa de Frete: <input type="number" id="taxaFrete" step="0.01" required><br>
+    Cozinha ID: <input type="number" id="cozinhaId" required><br>
+    <fieldset style="border:1px solid #ccc; padding:1em; margin:1em 0;">
+      <legend>Endereço</legend>
+      CEP: <input type="text" id="cep" required><br>
+      Logradouro: <input type="text" id="logradouro" required><br>
+      Número: <input type="text" id="numero"><br>
+      Bairro: <input type="text" id="bairro" required><br>
+      Cidade ID: <input type="number" id="cidadeId" required><br>
+    </fieldset>
+    <label>Formas de Pagamento:</label><br>
+    <input type="checkbox" name="formasPagamento" value="1" id="fp1"> <label for="fp1">Cartão de Crédito</label><br>
+    <input type="checkbox" name="formasPagamento" value="2" id="fp2"> <label for="fp2">Pix</label><br>
+    <input type="checkbox" name="formasPagamento" value="3" id="fp3"> <label for="fp3">Dinheiro</label><br>
+    <button type="submit">Cadastrar</button>
+  </form>
+  <hr>
+  <h2>Restaurantes Cadastrados</h2>
+  <div id="listaRestaurantes"></div>
+  <hr>
+  <h2>Editar Restaurante</h2>
+  <form onsubmit="editarRestaurante(event)">
+    ID: <input type="number" id="editId" required readonly><br>
+    Nome: <input type="text" id="editNome" required><br>
+    Taxa de Frete: <input type="number" id="editTaxaFrete" step="0.01" required><br>
+    Cozinha ID: <input type="number" id="editCozinhaId" required><br>
+    <fieldset style="border:1px solid #ccc; padding:1em; margin:1em 0;">
+      <legend>Endereço</legend>
+      CEP: <input type="text" id="editCep" required><br>
+      Logradouro: <input type="text" id="editLogradouro" required><br>
+      Número: <input type="text" id="editNumero"><br>
+      Bairro: <input type="text" id="editBairro" required><br>
+      Cidade ID: <input type="number" id="editCidadeId" required><br>
+    </fieldset>
+    <label>Formas de Pagamento:</label><br>
+    <input type="checkbox" name="editFormasPagamento" value="1" id="editfp1"> <label for="editfp1">Cartão de Crédito</label><br>
+    <input type="checkbox" name="editFormasPagamento" value="2" id="editfp2"> <label for="editfp2">Pix</label><br>
+    <input type="checkbox" name="editFormasPagamento" value="3" id="editfp3"> <label for="editfp3">Dinheiro</label><br>
+    <button type="submit">Salvar Alterações</button>
+    <button type="button" onclick="cancelarEdicao()">Cancelar</button>
+  </form>
+  <div id="resultado"></div>
+  <script>
+    const API = 'http://localhost:3001/api/restaurantes';
+    const API_PAGAMENTO = 'http://localhost:3001/api/formas-pagamento';
+
+    function listarRestaurantes() {
+      fetch(API)
+        .then(r => r.json())
+        .then(data => {
+          const div = document.getElementById('listaRestaurantes');
+          div.innerHTML = '';
+          data.forEach(r => {
+            div.innerHTML += `<div class='restaurante'>
+              <b>ID:</b> ${r.id} <b>Nome:</b> ${r.nome} <b>Endereço:</b> ${r.endereco ? `${r.endereco.logradouro}, ${r.endereco.numero || ''} - ${r.endereco.bairro || ''}` : ''} <b>Cozinha:</b> ${r.cozinhaId || ''}
+              <button onclick="prepararEdicao(${r.id}, '${r.nome}', ${r.taxaFrete}, ${r.cozinhaId}, ${JSON.stringify(r.endereco)}, ${JSON.stringify((r.formasPagamento||[]).map(fp=>fp.id))})">Editar</button>
+              <button onclick="deletarRestaurante(${r.id})">Deletar</button>
+            </div>`;
+          });
+        });
+    }
+
+    function carregarFormasPagamento() {
+      fetch(API_PAGAMENTO)
+        .then(r => r.json())
+        .then(data => {
+          const select = document.getElementById('formasPagamento');
+          const selectEdit = document.getElementById('editFormasPagamento');
+          select.innerHTML = '';
+          selectEdit.innerHTML = '';
+          data.forEach(fp => {
+            select.innerHTML += `<option value="${fp.id}">${fp.descricao}</option>`;
+            selectEdit.innerHTML += `<option value="${fp.id}">${fp.descricao}</option>`;
+          });
+        });
+    }
+
+    function getSelectedValues(selectId) {
+      return Array.from(document.getElementById(selectId).selectedOptions).map(opt => Number(opt.value));
+    }
+
+    function getSelectedCheckboxValues(name) {
+      return Array.from(document.querySelectorAll('input[name="' + name + '"]:checked')).map(cb => Number(cb.value));
+    }
+
+    function cadastrarRestaurante(e) {
+      e.preventDefault();
+      const body = {
+        nome: document.getElementById('nome').value.trim(),
+        taxaFrete: Number(document.getElementById('taxaFrete').value),
+        cozinhaId: Number(document.getElementById('cozinhaId').value),
+        formasPagamentoIds: getSelectedCheckboxValues('formasPagamento'),
+        endereco: {
+          cep: document.getElementById('cep').value.trim(),
+          logradouro: document.getElementById('logradouro').value.trim(),
+          numero: document.getElementById('numero').value.trim(),
+          bairro: document.getElementById('bairro').value.trim(),
+          cidadeId: Number(document.getElementById('cidadeId').value)
+        }
+      };
+      fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('resultado').innerHTML = '<h3>Cadastro:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        listarRestaurantes();
+      });
+    }
+
+    function prepararEdicao(id, nome, taxaFrete, cozinhaId, endereco, formasPagamentoIds) {
+      document.getElementById('editId').value = id;
+      document.getElementById('editNome').value = nome;
+      document.getElementById('editTaxaFrete').value = taxaFrete;
+      document.getElementById('editCozinhaId').value = cozinhaId;
+      document.getElementById('editCep').value = endereco?.cep || '';
+      document.getElementById('editLogradouro').value = endereco?.logradouro || '';
+      document.getElementById('editNumero').value = endereco?.numero || '';
+      document.getElementById('editBairro').value = endereco?.bairro || '';
+      document.getElementById('editCidadeId').value = endereco?.cidadeId || '';
+      [1,2,3].forEach(i => {
+        document.getElementById('editfp'+i).checked = (formasPagamentoIds||[]).includes(i);
+      });
+    }
+
+    function editarRestaurante(e) {
+      e.preventDefault();
+      const id = document.getElementById('editId').value;
+      const body = {
+        nome: document.getElementById('editNome').value.trim(),
+        taxaFrete: Number(document.getElementById('editTaxaFrete').value),
+        cozinhaId: Number(document.getElementById('editCozinhaId').value),
+        formasPagamentoIds: getSelectedCheckboxValues('editFormasPagamento'),
+        endereco: {
+          cep: document.getElementById('editCep').value.trim(),
+          logradouro: document.getElementById('editLogradouro').value.trim(),
+          numero: document.getElementById('editNumero').value.trim(),
+          bairro: document.getElementById('editBairro').value.trim(),
+          cidadeId: Number(document.getElementById('editCidadeId').value)
+        }
+      };
+      fetch(`${API}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('resultado').innerHTML = '<h3>Edição:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        listarRestaurantes();
+      });
+    }
+
+    function deletarRestaurante(id) {
+      if (!confirm('Tem certeza que deseja deletar este restaurante?')) return;
+      fetch(`${API}/${id}`, { method: 'DELETE' })
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('resultado').innerHTML = '<h3>Exclusão:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+          listarRestaurantes();
+        });
+    }
+
+    function cancelarEdicao() {
+      document.getElementById('editId').value = '';
+      document.getElementById('editNome').value = '';
+      document.getElementById('editEndereco').value = '';
+      document.getElementById('editCozinha').value = '';
+    }
+
+    // Inicializa a lista e as formas de pagamento ao abrir a página
+    carregarFormasPagamento();
+    listarRestaurantes();
+  </script>
+</body>
+</html>

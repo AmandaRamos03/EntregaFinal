@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Testar CRUD de Pedidos</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    input, select, button { margin: 0.2em; }
+    pre { background: #f4f4f4; padding: 1em; }
+  </style>
+</head>
+<body>
+  <h1>CRUD de Pedidos (API)</h1>
+  <button onclick="listarPedidos()">Listar Todos</button>
+  <input type="number" id="buscarId" placeholder="ID do Pedido">
+  <button onclick="buscarPedido()">Buscar por ID</button>
+  <hr>
+  <h2>Criar Pedido</h2>
+  <form onsubmit="criarPedido(event)">
+    Restaurante ID: <input type="number" id="restauranteId" required value="1"><br>
+    Endereço ID: <input type="number" id="enderecoId" required value="1"><br>
+    Forma Pagamento ID: <input type="number" id="formaPagamentoId" required value="1"><br>
+    Produto ID: <input type="number" id="produtoId" required value="1">
+    Quantidade: <input type="number" id="quantidade" required value="1"><br>
+    Categoria: <input type="text" id="categoria" value="teste"><br>
+    <button type="submit">Criar Pedido</button>
+  </form>
+  <hr>
+  <h2>Atualizar Status do Pedido</h2>
+  Pedido ID: <input type="number" id="updateId">
+  Novo Status: <input type="text" id="novoStatus" placeholder="Ex: CONFIRMADO">
+  <button onclick="atualizarStatus()">Atualizar Status</button>
+  <hr>
+  <h2>Deletar Pedido (não implementado na API)</h2>
+  <p>Para deletar, implemente a rota DELETE /api/pedidos/:id no backend.</p>
+  <hr>
+  <div id="resultado"></div>
+  <script>
+    const API = 'http://localhost:3001/api/pedidos';
+
+    function listarPedidos() {
+      fetch(API)
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('resultado').innerHTML = '<h3>Pedidos:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        })
+        .catch(e => alert('Erro ao listar pedidos: ' + e));
+    }
+
+    function buscarPedido() {
+      const id = document.getElementById('buscarId').value;
+      if (!id) return alert('Informe o ID do pedido!');
+      fetch(`${API}/${id}`)
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('resultado').innerHTML = '<h3>Pedido:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        })
+        .catch(e => alert('Erro ao buscar pedido: ' + e));
+    }
+
+    function criarPedido(e) {
+      e.preventDefault();
+      const body = {
+        restauranteId: Number(document.getElementById('restauranteId').value),
+        enderecoId: Number(document.getElementById('enderecoId').value),
+        formaPagamentoId: Number(document.getElementById('formaPagamentoId').value),
+        itens: [
+          {
+            produtoId: Number(document.getElementById('produtoId').value),
+            quantidade: Number(document.getElementById('quantidade').value)
+          }
+        ],
+        categoria: document.getElementById('categoria').value
+      };
+      fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('resultado').innerHTML = '<h3>Pedido criado:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+      })
+      .catch(e => alert('Erro ao criar pedido: ' + e));
+    }
+
+    function atualizarStatus() {
+      const id = document.getElementById('updateId').value;
+      const status = document.getElementById('novoStatus').value;
+      if (!id || !status) return alert('Informe o ID e o novo status!');
+      fetch(`${API}/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('resultado').innerHTML = '<h3>Status atualizado:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+      })
+      .catch(e => alert('Erro ao atualizar status: ' + e));
+    }
+  </script>
+</body>
+</html>

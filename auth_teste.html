@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro e Login</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    input, button { margin: 0.2em; }
+    pre { background: #f4f4f4; padding: 1em; }
+  </style>
+</head>
+<body>
+  <h1>Cadastro de Usuário</h1>
+  <form onsubmit="cadastrar(event)">
+    Nome: <input type="text" id="nome" required><br>
+    Email: <input type="email" id="email" required><br>
+    Senha: <input type="password" id="senha" required><br>
+    <button type="submit">Cadastrar</button>
+  </form>
+  <hr>
+  <h1>Login</h1>
+  <form onsubmit="login(event)">
+    Email: <input type="email" id="loginEmail" required><br>
+    Senha: <input type="password" id="loginSenha" required><br>
+    <button type="submit">Entrar</button>
+  </form>
+  <div id="resultado"></div>
+  <script>
+    const API = 'http://localhost:3001/api/auth';
+
+    function cadastrar(e) {
+      e.preventDefault();
+      const body = {
+        nome: document.getElementById('nome').value.trim(),
+        email: document.getElementById('email').value.trim(), // Garante e-mail sem espaços
+        senha: document.getElementById('senha').value
+      };
+      fetch(API + '/registrar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('resultado').innerHTML = '<h3>Cadastro:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+      })
+      .catch(e => alert('Erro ao cadastrar: ' + e));
+    }
+
+    function login(e) {
+      e.preventDefault();
+      const body = {
+        email: document.getElementById('loginEmail').value,
+        senha: document.getElementById('loginSenha').value
+      };
+      fetch(API + '/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('resultado').innerHTML = '<h3>Login:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+      })
+      .catch(e => alert('Erro ao fazer login: ' + e));
+    }
+  </script>
+</body>
+</html>

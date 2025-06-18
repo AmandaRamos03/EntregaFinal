@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Visualizar Carrinho</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    input, button { margin: 0.2em; }
+    pre { background: #f4f4f4; padding: 1em; }
+  </style>
+</head>
+<body>
+  <h1>Visualizar Carrinho</h1>
+  <button onclick="buscarCarrinho()">Exibir Carrinho</button>
+  <button onclick="limparCarrinho()">Limpar Carrinho</button>
+  <h2>Adicionar Item</h2>
+  Produto ID: <input type="number" id="produtoId" value="1">
+  Quantidade: <input type="number" id="quantidade" value="1">
+  <button onclick="adicionarItem()">Adicionar ao Carrinho</button>
+  <hr>
+  <h2>Finalizar Carrinho e Gerar Pedido</h2>
+  <form onsubmit="finalizarCarrinho(event)">
+    Restaurante ID: <input type="number" id="restauranteId" value="1" required><br>
+    Endereço ID: <input type="number" id="enderecoId" value="1" required><br>
+    Forma Pagamento ID: <input type="number" id="formaPagamentoId" value="1" required><br>
+    Categoria: <input type="text" id="categoria" value="exemplo"><br>
+    <button type="submit">Finalizar Pedido</button>
+  </form>
+  <div id="resultado"></div>
+  <script>
+    const API = 'http://localhost:3001/api/carrinho';
+
+    function buscarCarrinho() {
+      fetch(API)
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('resultado').innerHTML = '<h3>Carrinho:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        })
+        .catch(e => alert('Erro ao buscar carrinho: ' + e));
+    }
+
+    function adicionarItem() {
+      const produtoId = Number(document.getElementById('produtoId').value);
+      const quantidade = Number(document.getElementById('quantidade').value);
+      fetch(API + '/item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ produtoId, quantidade })
+      })
+      .then(r => r.json())
+      .then(data => {
+        buscarCarrinho();
+      })
+      .catch(e => alert('Erro ao adicionar item: ' + e));
+    }
+
+    function limparCarrinho() {
+      fetch(API + '/limpar', { method: 'DELETE' })
+        .then(r => r.json())
+        .then(data => {
+          buscarCarrinho();
+        })
+        .catch(e => alert('Erro ao limpar carrinho: ' + e));
+    }
+
+    function finalizarCarrinho(e) {
+      e.preventDefault();
+      const body = {
+        restauranteId: Number(document.getElementById('restauranteId').value),
+        enderecoId: Number(document.getElementById('enderecoId').value),
+        formaPagamentoId: Number(document.getElementById('formaPagamentoId').value),
+        categoria: document.getElementById('categoria').value
+      };
+      fetch(API + '/finalizar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('resultado').innerHTML = '<h3>Pedido gerado:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        buscarCarrinho();
+      })
+      .catch(e => alert('Erro ao finalizar carrinho: ' + e));
+    }
+  </script>
+</body>
+</html>

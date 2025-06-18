@@ -1,0 +1,46 @@
+Rotas de todos os CRUDs do backend
+
+--- Usuário ---
+POST   /api/usuarios           # Criar usuário
+GET    /api/usuarios           # Listar todos os usuários
+GET    /api/usuarios/me        # Buscar perfil do usuário logado
+GET    /api/usuarios/:id       # Buscar usuário por id
+PUT    /api/usuarios/me        # Atualizar perfil do usuário logado
+DELETE /api/usuarios/me        # Deletar perfil do usuário logado
+
+--- Autenticação ---
+POST   /api/auth/register      # Registrar novo usuário
+POST   /api/auth/login         # Login
+
+--- Restaurante ---
+GET    /api/restaurantes             # Listar restaurantes
+GET    /api/restaurantes/:id         # Buscar restaurante por id
+POST   /api/restaurantes             # Criar restaurante
+PUT    /api/restaurantes/:id         # Atualizar restaurante
+DELETE /api/restaurantes/:id         # Deletar restaurante
+
+--- Produto ---
+GET    /api/produtos                 # Listar produtos
+GET    /api/produtos/:id             # Buscar produto por id
+POST   /api/produtos                 # Criar produto
+PUT    /api/produtos/:id             # Atualizar produto
+DELETE /api/produtos/:id             # Deletar produto
+
+--- Pedido ---
+GET    /api/pedidos                  # Listar pedidos do usuário
+GET    /api/pedidos/:id              # Buscar detalhes de um pedido
+POST   /api/pedidos                  # Criar pedido
+PATCH  /api/pedidos/:id/status       # Atualizar status do pedido
+
+--- Carrinho ---
+GET    /api/carrinho                 # Buscar/criar carrinho do usuário
+POST   /api/carrinho/item            # Adicionar item ao carrinho
+PUT    /api/carrinho/item/:itemId    # Atualizar quantidade de item
+DELETE /api/carrinho/item/:itemId    # Remover item do carrinho
+DELETE /api/carrinho/limpar          # Limpar carrinho
+
+--- Avaliação de Pedido ---
+POST   /api/avaliacoes               # Criar avaliação
+GET    /api/avaliacoes/pedido/:pedidoId # Listar avaliações de um pedido
+PUT    /api/avaliacoes/:id           # Atualizar avaliação
+DELETE /api/avaliacoes/:id           # Deletar avaliação
